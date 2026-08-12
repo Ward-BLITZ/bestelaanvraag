@@ -343,16 +343,10 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
 
 <!-- Verwachte levertermijn-modal -->
 <div class="modal-overlay" id="lever-modal">
-  <div class="modal-box" style="max-width:400px">
+  <div class="modal-box" style="max-width:460px">
     <div class="modal-header"><span class="modal-title">Verwachte levertermijn</span><button class="modal-close" onclick="leverSluitModal()"><i class="ti ti-x"></i></button></div>
     <div style="font-size:13px;color:var(--tx2);margin-bottom:14px">Over hoeveel weken wordt dit artikel verwacht?</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn primary" onclick="leverKiesWeken(1)">1 week</button>
-      <button class="btn primary" onclick="leverKiesWeken(2)">2 weken</button>
-      <button class="btn primary" onclick="leverKiesWeken(3)">3 weken</button>
-      <button class="btn primary" onclick="leverKiesWeken(4)">4 weken</button>
-      <button class="btn primary" onclick="leverKiesWeken(5)">5 weken</button>
-    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="lever-weken-btns"></div>
   </div>
 </div>
 
@@ -1053,9 +1047,19 @@ async function beheerToggleBesteld(id, nieuw){
 }
 
 // ── Popup: verwachte levertermijn kiezen (1 klik) ──────────────
+const LEVER_MAX_WEKEN = 15;
 let leverAanvraagId = null;
 function beheerOpenLeverModal(id){
   leverAanvraagId = id;
+  const el = document.getElementById('lever-weken-btns');
+  if(el && !el.dataset.gevuld){
+    let html = '';
+    for(let w=1; w<=LEVER_MAX_WEKEN; w++){
+      html += `<button class="btn primary" style="min-width:64px" onclick="leverKiesWeken(${w})">${w} week${w>1?'en':''}</button>`;
+    }
+    el.innerHTML = html;
+    el.dataset.gevuld = '1';
+  }
   document.getElementById('lever-modal').classList.add('open');
 }
 function leverSluitModal(){

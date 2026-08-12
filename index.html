@@ -654,37 +654,49 @@ function prodRenderResultaten(){
     </div>`).join('');
 }
 
+let prodDubbels = []; // openstaande aanvragen voor het gekozen artikel (gecachet bij selectie)
+
 async function prodSelecteer(i){
-  prodGeselecteerd = prodResLijst[i];
+  const gekozen = prodResLijst[i];
+  if(!gekozen) return;
+
+  // Al een openstaande aanvraag voor dit artikel? Dan eerst expliciet bevestigen.
+  const dubbels = await checkDubbeleAanvraag(gekozen.sku);
+  if(dubbels.length){
+    const wie = dubbels[0].aangevraagd_door_naam || dubbels[0].aangevraagd_door_email || 'een collega';
+    const doorgaan = confirm(`Let op: dit artikel is al aangevraagd door ${wie} op ${formatDatum(dubbels[0].aangemaakt_op)}.\n\nWenst u toch door te gaan?`);
+    if(!doorgaan) return; // Nee: annuleren, selectie blijft ongewijzigd
+  }
+
+  prodGeselecteerd = gekozen;
+  prodDubbels = dubbels;
   prodStatus = null;
   document.getElementById('prod-resultaten').innerHTML = '';
   document.getElementById('prod-search').value = prodGeselecteerd.naam;
-  await renderProdDetail();
+  renderProdDetail();
 }
 
 function prodKiesStatus(status){ prodStatus = status; renderProdDetail(); }
 
 function prodReset(){
-  prodGeselecteerd = null; prodStatus = null;
+  prodGeselecteerd = null; prodStatus = null; prodDubbels = [];
   document.getElementById('prod-search').value = '';
   document.getElementById('prod-resultaten').innerHTML = '';
   document.getElementById('prod-detail').style.display = 'none';
   document.getElementById('prod-search').focus();
 }
 
-async function renderProdDetail(){
+function renderProdDetail(){
   const el = document.getElementById('prod-detail');
   if(!prodGeselecteerd){ el.style.display = 'none'; return; }
   el.style.display = 'block';
-
-  const dubbels = await checkDubbeleAanvraag(prodGeselecteerd.sku);
 
   el.innerHTML = `
     <div class="art-selected-box">
       <strong>${escapeHtml(prodGeselecteerd.sku||'')}</strong> — ${escapeHtml(prodGeselecteerd.naam)}
       <button class="btn sm" style="float:right" onclick="prodReset()"><i class="ti ti-arrow-back"></i> Ander artikel</button>
     </div>
-    ${dubbels.length ? `<div class="dup-warning"><i class="ti ti-info-circle"></i> Er staat al een openstaande aanvraag voor dit artikel (${escapeHtml(dubbels[0].aangevraagd_door_naam||'')}, ${formatDatum(dubbels[0].aangemaakt_op)}).</div>` : ''}
+    ${prodDubbels.length ? `<div class="dup-warning"><i class="ti ti-info-circle"></i> Er staat al een openstaande aanvraag voor dit artikel (${escapeHtml(prodDubbels[0].aangevraagd_door_naam||'')}, ${formatDatum(prodDubbels[0].aangemaakt_op)}).</div>` : ''}
     <div style="font-size:13px;color:var(--tx2);margin-bottom:10px">Is dit artikel volledig op, of nog beperkt op voorraad?</div>
     <div class="status-choice-row">
       <div class="status-choice ${prodStatus==='op'?'sel-op':''}" onclick="prodKiesStatus('op')"><i class="ti ti-alert-triangle"></i> Volledig op</div>

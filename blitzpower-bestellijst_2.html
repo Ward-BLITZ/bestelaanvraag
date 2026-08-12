@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Blitzpower — Bestellijst &amp; Voorraad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#00DFA3; --dark:#1D252D; --gray:#D9D9D6;
+  --bg:#fff; --bg2:#f2f4f3; --bg3:#e8eceb;
+  --tx:#1D252D; --tx2:#4a5760; --tx3:#8a9ba3;
+  --bd:rgba(29,37,45,.12); --bd2:rgba(29,37,45,.24);
+  --r:8px; --rl:12px;
+  --red:#a32d2d; --amber:#c77d00; --okgreen:#00805e;
+}
+@media(prefers-color-scheme:dark){:root:not(.light-mode){
+  --bg:#1D252D;--bg2:#252e38;--bg3:#161d24;
+  --tx:#fff;--tx2:#D9D9D6;--tx3:#5a6a74;
+  --bd:rgba(217,217,214,.12);--bd2:rgba(217,217,214,.28);
+}}
+body{font-family:'Inter',sans-serif;background:var(--bg2);color:var(--tx);min-height:100vh}
+h1,h2,h3{font-family:'Poppins',sans-serif}
+input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
+
+/* ── generieke elementen (matchen dashboard-stijl) ─────────── */
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:500;padding:9px 16px;border:1px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn:hover{background:var(--bg2)}
+.btn.primary{background:var(--green);color:var(--dark);border-color:var(--green);font-weight:700}
+.btn.primary:hover{background:#00c491}
+.btn.danger{color:var(--red);border-color:rgba(163,45,45,.3)}
+.btn.danger:hover{background:#fcebeb}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+.pills{display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;padding:6px 14px;border:1px solid var(--bd);border-radius:20px;background:var(--bg2);color:var(--tx2);cursor:pointer;transition:all .15s}
+.pill.active{background:var(--green);color:var(--dark);border-color:var(--green);font-weight:700}
+
+.wms-card{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rl);padding:18px}
+.wms-page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.wms-page-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:19px;color:var(--tx);margin-bottom:3px}
+.wms-page-sub{color:var(--tx2);font-size:13px}
+.wms-table-wrap{overflow-x:auto}
+.wms-table{width:100%;border-collapse:collapse}
+.wms-table th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);padding:9px 12px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.wms-table td{padding:11px 12px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle}
+.wms-empty{text-align:center;padding:44px 20px;color:var(--tx3)}
+.wms-empty i{font-size:28px;display:block;margin-bottom:8px}
+.wms-search{background:var(--bg);border:1px solid var(--bd);border-radius:var(--r);padding:11px 14px;color:var(--tx);font-size:14px;outline:none;transition:border-color .15s;width:100%}
+.wms-search:focus{border-color:var(--green)}
+
+.auth-field{margin-bottom:14px}
+.auth-field label{font-size:12px;color:var(--tx2);margin-bottom:4px;display:block;font-weight:500}
+.auth-field input,.auth-field select{width:100%;padding:10px 12px;border:1px solid var(--bd2);border-radius:8px;outline:none;color:var(--tx);background:var(--bg);transition:border-color .15s}
+.auth-field input:focus,.auth-field select:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,223,163,.18)}
+.auth-error{font-size:12px;color:var(--red);background:#fcebeb;padding:9px 12px;border-radius:6px;margin-bottom:12px;display:none}
+.auth-error.show{display:block}
+.auth-msg{font-size:12px;color:#085041;background:#E1F5EE;padding:9px 12px;border-radius:6px;margin-bottom:12px;display:none}
+.auth-msg.show{display:block}
+
+/* ── login scherm ───────────────────────────────────────────── */
+.auth-screen{position:fixed;inset:0;background:radial-gradient(circle at 22% 20%,#2c3841 0%,#1D252D 55%,#12171b 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.auth-box{background:#fff;border-radius:18px;padding:2.4rem;width:100%;max-width:400px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.auth-logo{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:1.6rem}
+.auth-logo i{font-size:30px;color:var(--green)}
+.auth-logo-tag{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#8a9ba3;font-weight:600}
+.auth-title{font-size:19px;font-weight:700;color:#1D252D;text-align:center}
+.auth-subtitle{font-size:13px;color:#4a5760;text-align:center;margin-bottom:1.5rem}
+.auth-btn{width:100%;padding:12px;background:#00DFA3;color:#1D252D;border:none;border-radius:8px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .15s,transform .1s}
+.auth-btn:hover{background:#00c491}
+.auth-btn:active{transform:scale(.98)}
+.auth-box .auth-field label{color:#4a5760}
+.auth-box .auth-field input{border-color:rgba(29,37,45,.2);color:#1D252D}
+
+/* ── topbar / tabs ──────────────────────────────────────────── */
+.topbar{display:flex;align-items:center;gap:18px;background:var(--dark);color:#fff;padding:10px 20px;flex-wrap:wrap}
+.topbar-brand{font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;display:flex;align-items:center;gap:7px;color:#fff}
+.topbar-brand i{color:var(--green)}
+.topbar-brand .sub{font-family:'Inter',sans-serif;font-weight:400;font-size:11px;color:#9aa7ae;margin-left:6px}
+.topbar-tabs{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+.tab-btn{background:transparent;border:1px solid transparent;color:#c7d0d4;padding:8px 14px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.tab-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.tab-btn.active{background:var(--green);color:var(--dark);font-weight:700}
+.topbar-user{display:flex;align-items:center;gap:10px;font-size:13px;color:#dfe6e8}
+.topbar-user .btn{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
+.topbar-user .btn:hover{background:rgba(255,255,255,.12)}
+
+.page{display:none;max-width:1000px;margin:0 auto;padding:22px 18px 60px}
+.page.active{display:block}
+
+/* ── artikel zoeken ─────────────────────────────────────────── */
+.art-result-item{padding:12px 14px;border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;cursor:pointer;transition:background .12s,border-color .12s}
+.art-result-item:hover{background:var(--bg2);border-color:var(--green)}
+.art-result-item strong{font-family:'Poppins',sans-serif}
+.art-selected-box{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.status-choice-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.status-choice{flex:1;min-width:180px;padding:16px;border:2px solid var(--bd);border-radius:var(--r);cursor:pointer;text-align:center;transition:all .15s;font-weight:600;font-size:14px}
+.status-choice i{display:block;font-size:22px;margin-bottom:6px}
+.status-choice:hover{border-color:var(--bd2)}
+.status-choice.sel-op{border-color:var(--red);background:#fcebeb;color:var(--red)}
+.status-choice.sel-bijna{border-color:var(--amber);background:#fdf3e2;color:var(--amber)}
+.dup-warning{background:#fdf3e2;border:1px solid rgba(199,125,0,.35);color:#8a5c00;padding:10px 13px;border-radius:var(--r);font-size:12.5px;margin-bottom:12px}
+.afas-status-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rl);margin-bottom:14px;flex-wrap:wrap;font-size:12px;color:var(--tx3)}
+
+/* ── modal ──────────────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,26,31,.55);backdrop-filter:blur(2px);z-index:999}
+.modal-overlay.open{display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-box{background:var(--bg);border-radius:var(--rl);width:100%;max-width:460px;max-height:90vh;overflow-y:auto;padding:1.6rem;box-shadow:0 24px 60px rgba(20,26,31,.25)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem}
+.modal-title{font-family:'Poppins',sans-serif;font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;cursor:pointer;color:var(--tx2);padding:6px;border-radius:var(--r);font-size:18px;line-height:1}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:1rem;border-top:1px solid var(--bd);padding-top:1rem}
+
+.user-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--bd);border-radius:var(--r);margin-bottom:6px;background:var(--bg);flex-wrap:wrap}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:rgba(0,223,163,.15);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:#00805e;flex-shrink:0}
+.role-chip{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--bd2);cursor:pointer;user-select:none}
+.role-chip.on{background:var(--green);color:var(--dark);border-color:var(--green);font-weight:700}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:#fff;padding:11px 18px;border-radius:var(--r);font-size:13px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+.setup-box{border:1px dashed var(--bd2);border-radius:var(--rl);padding:16px;font-size:12.5px;color:var(--tx2);background:var(--bg2)}
+.setup-box pre{background:var(--dark);color:#d9f7ec;padding:12px;border-radius:8px;overflow-x:auto;font-size:11.5px;line-height:1.5;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <i class="ti ti-bolt"></i>
+      <div class="auth-logo-tag">Blitzpower</div>
+    </div>
+    <div class="auth-title">Bestellijst &amp; Voorraad</div>
+    <div class="auth-subtitle">Log in met je Blitzpower-account.</div>
+    <div class="auth-error" id="login-error"></div>
+    <div class="auth-field"><label>E-mailadres</label><input id="login-email" type="email" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="auth-field"><label>Wachtwoord</label><input id="login-password" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="auth-btn" onclick="doLogin()">Aanmelden</button>
+    <div style="font-size:11.5px;color:#8a9ba3;text-align:center;margin-top:14px">Nog geen account? Vraag je manager om je uit te nodigen.</div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-brand"><i class="ti ti-bolt"></i> Blitzpower <span class="sub">Bestellijst &amp; Voorraad</span></div>
+  <div class="topbar-tabs">
+    <button class="tab-btn" id="tab-productie" onclick="showTab('productie')" style="display:none"><i class="ti ti-clipboard-list"></i> Productie</button>
+    <button class="tab-btn" id="tab-service" onclick="showTab('service')" style="display:none"><i class="ti ti-tool"></i> Service</button>
+    <button class="tab-btn" id="tab-beheer" onclick="showTab('beheer')" style="display:none"><i class="ti ti-list-check"></i> Besteloverzicht</button>
+    <button class="tab-btn" id="tab-gebruikers" onclick="showTab('gebruikers')" style="display:none"><i class="ti ti-users"></i> Gebruikers</button>
+  </div>
+  <div class="topbar-user">
+    <span id="topbar-naam"></span>
+    <button class="btn sm" onclick="doLogout()" title="Uitloggen"><i class="ti ti-logout"></i></button>
+  </div>
+</div>
+
+<!-- ─── PRODUCTIE ─── -->
+<div class="page" id="page-productie">
+  <div class="wms-page-header">
+    <div><div class="wms-page-title">Bestelaanvraag</div><div class="wms-page-sub">Zoek het artikel en geef door of het bijbesteld moet worden.</div></div>
+  </div>
+  <div class="afas-status-bar">
+    <i class="ti ti-building-factory" style="color:#1d4ed8"></i>
+    <span style="font-weight:600;color:var(--tx2)">AFAS artikelen</span>
+    <span id="afas-status-lbl"><i class="ti ti-clock"></i> Nog niet geladen</span>
+    <button class="btn sm" style="margin-left:auto" onclick="laadArtikelen(true)"><i class="ti ti-refresh"></i> Vernieuwen</button>
+  </div>
+  <div class="wms-card" style="margin-bottom:20px">
+    <input class="wms-search" id="prod-search" placeholder="Zoek op artikelcode of omschrijving..." oninput="prodRenderResultaten()" autocomplete="off">
+    <div id="prod-resultaten" style="margin-top:10px"></div>
+    <div id="prod-detail" style="display:none"></div>
+  </div>
+  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Mijn aanvragen</div>
+  <div class="wms-card">
+    <div class="wms-table-wrap"><table class="wms-table">
+      <thead><tr><th>Artikel</th><th>Status</th><th>Urgentie</th><th>Datum</th><th>Status besteld</th></tr></thead>
+      <tbody id="prod-mijn-tbody"></tbody>
+    </table></div>
+    <div id="prod-mijn-empty" class="wms-empty" style="display:none"><i class="ti ti-clipboard-list"></i><p>Nog geen aanvragen ingediend.</p></div>
+  </div>
+</div>
+
+<!-- ─── SERVICE ─── -->
+<div class="page" id="page-service">
+  <div class="wms-page-header">
+    <div><div class="wms-page-title">Onderdelen uit stock</div><div class="wms-page-sub">Registreer welke onderdelen je uit het magazijn hebt meegenomen.</div></div>
+  </div>
+  <div class="wms-card" style="margin-bottom:20px">
+    <input class="wms-search" id="serv-search" placeholder="Zoek op artikelcode of omschrijving..." oninput="servRenderResultaten()" autocomplete="off">
+    <div id="serv-resultaten" style="margin-top:10px"></div>
+    <div id="serv-detail" style="display:none"></div>
+  </div>
+  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Mijn registraties</div>
+  <div class="wms-card">
+    <div class="wms-table-wrap"><table class="wms-table">
+      <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Datum</th></tr></thead>
+      <tbody id="serv-mijn-tbody"></tbody>
+    </table></div>
+    <div id="serv-mijn-empty" class="wms-empty" style="display:none"><i class="ti ti-tool"></i><p>Nog geen registraties.</p></div>
+  </div>
+</div>
+
+<!-- ─── BEHEER (manager) ─── -->
+<div class="page" id="page-beheer">
+  <div class="wms-page-header">
+    <div><div class="wms-page-title">Besteloverzicht</div><div class="wms-page-sub">Bestelaanvragen vanuit productie — vink af zodra besteld.</div></div>
+    <button class="btn sm" onclick="beheerLaad()"><i class="ti ti-refresh"></i> Vernieuwen</button>
+  </div>
+  <div class="pills" style="margin-bottom:14px" id="beheer-filter-pills">
+    <button class="pill active" data-f="open" onclick="beheerSetFilter('open')">Open</button>
+    <button class="pill" data-f="besteld" onclick="beheerSetFilter('besteld')">Besteld</button>
+    <button class="pill" data-f="alle" onclick="beheerSetFilter('alle')">Alles</button>
+  </div>
+  <div class="wms-card" style="margin-bottom:28px">
+    <div class="wms-table-wrap"><table class="wms-table">
+      <thead><tr><th>Artikel</th><th>Voorraadstatus</th><th>Urgentie</th><th>Aangevraagd door</th><th>Datum</th><th>Opmerking</th><th>Besteld</th></tr></thead>
+      <tbody id="beheer-tbody"></tbody>
+    </table></div>
+    <div id="beheer-empty" class="wms-empty" style="display:none"><i class="ti ti-clipboard-check"></i><p>Geen aanvragen.</p></div>
+  </div>
+
+  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Service-registraties (uit magazijn genomen)</div>
+  <div class="wms-card">
+    <div class="wms-table-wrap"><table class="wms-table">
+      <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Medewerker</th><th>Datum</th></tr></thead>
+      <tbody id="beheer-serv-tbody"></tbody>
+    </table></div>
+    <div id="beheer-serv-empty" class="wms-empty" style="display:none"><i class="ti ti-tool"></i><p>Geen registraties.</p></div>
+  </div>
+</div>
+
+<!-- ─── GEBRUIKERS (manager) ─── -->
+<div class="page" id="page-gebruikers">
+  <div class="wms-page-header">
+    <div><div class="wms-page-title">Gebruikers</div><div class="wms-page-sub">Wie heeft toegang tot Productie, Service en Beheer.</div></div>
+    <button class="btn primary" onclick="gebrOpenModal()"><i class="ti ti-user-plus"></i> Gebruiker uitnodigen</button>
+  </div>
+  <div id="gebr-srk-hint" class="setup-box" style="display:none;margin-bottom:16px"></div>
+  <div class="wms-card"><div id="gebr-list"></div></div>
+</div>
+
+<!-- Uitnodig-modal -->
+<div class="modal-overlay" id="gebr-modal">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Gebruiker uitnodigen</span><button class="modal-close" onclick="gebrSluitModal()"><i class="ti ti-x"></i></button></div>
+    <div class="auth-error" id="gebr-modal-err"></div>
+    <div class="auth-msg" id="gebr-modal-msg"></div>
+    <div class="auth-field"><label>Naam</label><input id="gebr-naam" placeholder="Voor- en achternaam"></div>
+    <div class="auth-field"><label>E-mailadres</label><input id="gebr-email" type="email"></div>
+    <div class="auth-field"><label>Rollen</label>
+      <div style="display:flex;gap:16px;margin-top:6px;flex-wrap:wrap">
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="gebr-rol-productie"> Productie</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="gebr-rol-service"> Service</label>
+        <label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="gebr-rol-manager"> Manager</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="gebrSluitModal()">Annuleren</button>
+      <button class="btn primary" onclick="gebrUitnodigen()"><i class="ti ti-send"></i> Uitnodigen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG — zelfde Supabase-project als het bestaande dashboard
+// ══════════════════════════════════════════════════════════════
+const ADMIN_EMAIL = 'sales@blitzpower.com';
+const SUPABASE_URL = 'https://rhztaqutznafsgprnkvn.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJoenRhcXV0em5hZnNncHJua3ZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2OTI2MjYsImV4cCI6MjA5NzI2ODYyNn0.n-ojVvnlm8x-g-O6WNoN8un67oR-yHMSlaJVuh_8caI';
+// Zelfde AFAS-proxy (Supabase Edge Function) als het dashboard — AFAS-inloggegevens
+// staan NERGENS in deze pagina, die blijven veilig in de Edge Function.
+const AFAS_PROXY_URL = 'https://rhztaqutznafsgprnkvn.supabase.co/functions/v1/super-handler';
+
+let supabaseClient = null;
+let currentUser = null;
+let currentUserNaam = '';
+let currentRollen = [];
+
+function initSupabaseClient(){
+  if(supabaseClient) return true;
+  const saved = JSON.parse(localStorage.getItem('blitz_sb') || 'null');
+  const key = saved?.key || SUPABASE_ANON_KEY;
+  try{
+    supabaseClient = supabase.createClient(SUPABASE_URL, key);
+    return true;
+  }catch(e){ console.error('Supabase init fout:', e); return false; }
+}
+
+// Als de service_role key al is ingesteld via het bestaande dashboard (tabblad
+// Instellingen daar), staat die in de gedeelde "settings" tabel. Zo werkt
+// gebruikersbeheer hier automatisch mee, zonder opnieuw iets te moeten instellen.
+async function restoreServiceRoleKey(){
+  try{
+    const {data,error} = await supabaseClient.from('settings').select('data').eq('key','service_role_key').maybeSingle();
+    if(error) throw error;
+    const srk = data?.data?.srk;
+    if(srk){
+      localStorage.setItem('blitz_sb', JSON.stringify({url:SUPABASE_URL, key:srk}));
+      supabaseClient = null;
+      initSupabaseClient();
+      return true;
+    }
+  }catch(e){ console.warn('Kon service role key niet herstellen:', e.message); }
+  return false;
+}
+
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3500);
+}
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDatum(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('nl-BE',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('nl-BE',{hour:'2-digit',minute:'2-digit'});
+}
+function urgentieBadge(u){
+  const map = {hoog:['#a32d2d','Hoog'], normaal:['#c77d00','Normaal'], laag:['#00805e','Laag']};
+  const [kleur,label] = map[u] || map.normaal;
+  return `<span class="badge" style="background:${kleur};color:#fff">${label}</span>`;
+}
+function statusLabel(s){
+  return s==='op'
+    ? '<span class="badge" style="background:#a32d2d;color:#fff"><i class="ti ti-alert-triangle" style="margin-right:3px"></i>Volledig op</span>'
+    : '<span class="badge" style="background:#c77d00;color:#fff">Nog op voorraad</span>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// LOGIN / ROLLEN
+// ══════════════════════════════════════════════════════════════
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if(!email || !pw){ errEl.textContent = 'Vul e-mail en wachtwoord in.'; errEl.classList.add('show'); return; }
+  if(!initSupabaseClient()){ errEl.textContent = 'Kon geen verbinding maken met de database.'; errEl.classList.add('show'); return; }
+
+  const btn = document.querySelector('.auth-btn');
+  const orig = btn.textContent; btn.textContent = 'Bezig...'; btn.disabled = true;
+  try{
+    const {data,error} = await supabaseClient.auth.signInWithPassword({email, password: pw});
+    btn.textContent = orig; btn.disabled = false;
+    if(error){
+      const msg = {
+        'Invalid login credentials':'Verkeerd e-mailadres of wachtwoord.',
+        'Email not confirmed':'E-mail nog niet bevestigd. Check je inbox.',
+      }[error.message] || ('Fout: ' + error.message);
+      errEl.textContent = '❌ ' + msg; errEl.classList.add('show');
+      return;
+    }
+    await onLoggedIn(data.user);
+  }catch(e){
+    btn.textContent = orig; btn.disabled = false;
+    errEl.textContent = '❌ Verbindingsfout: ' + e.message; errEl.classList.add('show');
+  }
+}
+
+async function doLogout(){
+  try{ await supabaseClient.auth.signOut(); }catch{}
+  currentUser = null; currentRollen = [];
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('topbar').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+}
+
+function berekenRollen(user){
+  const meta = user?.user_metadata || {};
+  if(user?.email === ADMIN_EMAIL || meta.afdeling === 'hoofdadmin'){
+    return ['manager','productie','service'];
+  }
+  let rollen = Array.isArray(meta.magazijn_rollen) ? meta.magazijn_rollen.slice() : [];
+  if(rollen.includes('manager')){
+    if(!rollen.includes('productie')) rollen.push('productie');
+    if(!rollen.includes('service')) rollen.push('service');
+  }
+  return rollen;
+}
+
+async function onLoggedIn(user){
+  currentUser = user;
+  currentUserNaam = user.user_metadata?.naam || user.email;
+  currentRollen = berekenRollen(user);
+
+  if(!currentRollen.length){
+    document.getElementById('login-error').textContent = '❌ Dit account heeft nog geen rol (Productie/Service/Manager). Vraag je manager om er een toe te wijzen.';
+    document.getElementById('login-error').classList.add('show');
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  await restoreServiceRoleKey();
+
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('topbar-naam').textContent = currentUserNaam;
+
+  document.getElementById('tab-productie').style.display = currentRollen.includes('productie') ? 'inline-flex' : 'none';
+  document.getElementById('tab-service').style.display = currentRollen.includes('service') ? 'inline-flex' : 'none';
+  document.getElementById('tab-beheer').style.display = currentRollen.includes('manager') ? 'inline-flex' : 'none';
+  document.getElementById('tab-gebruikers').style.display = currentRollen.includes('manager') ? 'inline-flex' : 'none';
+
+  const eersteTab = currentRollen.includes('productie') ? 'productie'
+    : currentRollen.includes('service') ? 'service'
+    : 'beheer';
+  showTab(eersteTab);
+  laadArtikelen(false);
+}
+
+// Sessie herstellen bij herladen van de pagina
+window.addEventListener('load', async ()=>{
+  if(!initSupabaseClient()) return;
+  const {data} = await supabaseClient.auth.getSession();
+  if(data?.session?.user) await onLoggedIn(data.session.user);
+});
+
+// ══════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════
+let beheerPoll = null;
+function showTab(naam){
+  ['productie','service','beheer','gebruikers'].forEach(id=>{
+    document.getElementById('page-'+id).classList.toggle('active', id===naam);
+    document.getElementById('tab-'+id).classList.toggle('active', id===naam);
+  });
+  if(beheerPoll){ clearInterval(beheerPoll); beheerPoll = null; }
+  if(naam==='productie') prodLaadMijnAanvragen();
+  if(naam==='service') servLaadMijnRegistraties();
+  if(naam==='beheer'){
+    beheerLaad();
+    beheerPoll = setInterval(beheerLaad, 20000); // lichte polling zodat nieuwe aanvragen vanzelf verschijnen
+  }
+  if(naam==='gebruikers') gebrLaadLijst();
+}
+
+// ══════════════════════════════════════════════════════════════
+// AFAS ARTIKELEN (Profit_Article_Basic) — zelfde proxy als dashboard
+// ══════════════════════════════════════════════════════════════
+async function afasFetchConnector(connectorName, take=1000, extraParams=''){
+  const url = `${AFAS_PROXY_URL}?skip=0&take=${take}&connector=${encodeURIComponent(connectorName)}${extraParams}`;
+  const resp = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY }
+  });
+  if(!resp.ok) throw new Error(`Proxy fout: HTTP ${resp.status}`);
+  const json = await resp.json();
+  if(json.error) throw new Error(json.error);
+  return json.rows || json.data?.rows || [];
+}
+
+let artikelen = [];
+const ARTIKEL_CACHE_KEY = 'bp_artikelen_cache_v1';
+const ARTIKEL_CACHE_MS = 30*60*1000; // 30 min
+
+function setAfasStatus(status, extra){
+  const el = document.getElementById('afas-status-lbl');
+  if(!el) return;
+  if(status==='loading') el.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Laden…';
+  else if(status==='ok') el.innerHTML = `<i class="ti ti-check" style="color:#00805e"></i> ${artikelen.length} artikelen geladen`;
+  else if(status==='cache') el.innerHTML = `<i class="ti ti-clock" style="color:var(--tx3)"></i> ${artikelen.length} artikelen (uit cache)`;
+  else el.innerHTML = `<i class="ti ti-alert-circle" style="color:#a32d2d"></i> Fout bij laden${extra?': '+escapeHtml(extra):''}`;
+}
+
+function mapArtikelen(rows){
+  const perSku = new Map();
+  for(const r of rows){
+    const sku = r.ItemCode || r.Itemcode || r.Artikelcode || r.itemCode || r.Code || r.code || '';
+    const naam = r.Description || r.Omschrijving || r.omschrijving || r.description || r.naam || '(onbekend)';
+    const groep = r.ArtGroup || r.Artikelgroep || r.artikelgroep || r.ItemGroup || r.itemGroup || '';
+    const key = (sku || naam).trim().toLowerCase();
+    if(!key || perSku.has(key)) continue;
+    perSku.set(key, {sku, naam, groep});
+  }
+  return Array.from(perSku.values()).sort((a,b)=>a.naam.localeCompare(b.naam));
+}
+
+async function laadArtikelen(force){
+  if(!force){
+    const raw = localStorage.getItem(ARTIKEL_CACHE_KEY);
+    if(raw){
+      try{
+        const cache = JSON.parse(raw);
+        if(Date.now() - cache.tijd < ARTIKEL_CACHE_MS){
+          artikelen = cache.data;
+          setAfasStatus('cache');
+          return artikelen;
+        }
+      }catch{}
+    }
+  }
+  setAfasStatus('loading');
+  try{
+    const rows = await afasFetchConnector('Profit_Article_Basic', 5000);
+    artikelen = mapArtikelen(rows);
+    localStorage.setItem(ARTIKEL_CACHE_KEY, JSON.stringify({tijd: Date.now(), data: artikelen}));
+    setAfasStatus('ok');
+  }catch(e){
+    console.warn('AFAS artikelen fout:', e.message);
+    const raw = localStorage.getItem(ARTIKEL_CACHE_KEY);
+    if(raw){ try{ artikelen = JSON.parse(raw).data; }catch{} }
+    setAfasStatus(artikelen.length ? 'cache' : 'error', e.message);
+  }
+  return artikelen;
+}
+
+function zoekArtikelen(query){
+  const q = (query||'').trim().toLowerCase();
+  if(!q) return [];
+  return artikelen.filter(a =>
+    a.naam.toLowerCase().includes(q) ||
+    (a.sku||'').toLowerCase().includes(q) ||
+    (a.groep||'').toLowerCase().includes(q)
+  ).slice(0, 25);
+}
+
+function berekenUrgentie(status, aantal){
+  if(status === 'op') return 'hoog';
+  const n = (aantal===''||aantal==null) ? null : parseInt(aantal, 10);
+  if(n==null || isNaN(n)) return 'normaal';
+  if(n <= 2) return 'hoog';
+  if(n <= 5) return 'normaal';
+  return 'laag';
+}
+
+async function checkDubbeleAanvraag(sku){
+  if(!sku) return [];
+  try{
+    const {data,error} = await supabaseClient.from('magazijn_bestelaanvragen')
+      .select('artikel_naam,aangevraagd_door_naam,aangemaakt_op')
+      .eq('artikel_sku', sku).eq('besteld', false).limit(3);
+    if(error) throw error;
+    return data || [];
+  }catch(e){ return []; }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PRODUCTIE — bestelaanvraag (max 3-4 klikken)
+// ══════════════════════════════════════════════════════════════
+let prodResLijst = [];
+let prodGeselecteerd = null;
+let prodStatus = null;
+
+function prodRenderResultaten(){
+  const q = document.getElementById('prod-search').value;
+  prodGeselecteerd = null; prodStatus = null;
+  document.getElementById('prod-detail').style.display = 'none';
+  const res = zoekArtikelen(q);
+  prodResLijst = res;
+  const el = document.getElementById('prod-resultaten');
+  if(!q.trim()){ el.innerHTML = ''; return; }
+  if(!artikelen.length){ el.innerHTML = '<div class="wms-empty" style="padding:16px"><i class="ti ti-loader-2"></i><p>Artikelen worden nog geladen…</p></div>'; return; }
+  if(!res.length){ el.innerHTML = '<div class="wms-empty" style="padding:16px"><i class="ti ti-search-off"></i><p>Geen artikel gevonden.</p></div>'; return; }
+  el.innerHTML = res.map((a,i)=>`
+    <div class="art-result-item" onclick="prodSelecteer(${i})">
+      <div><strong>${escapeHtml(a.sku||'—')}</strong> — ${escapeHtml(a.naam)}</div>
+      ${a.groep ? `<div style="font-size:11px;color:var(--tx3);margin-top:2px">${escapeHtml(a.groep)}</div>` : ''}
+    </div>`).join('');
+}
+
+async function prodSelecteer(i){
+  prodGeselecteerd = prodResLijst[i];
+  prodStatus = null;
+  document.getElementById('prod-resultaten').innerHTML = '';
+  document.getElementById('prod-search').value = prodGeselecteerd.naam;
+  await renderProdDetail();
+}
+
+function prodKiesStatus(status){ prodStatus = status; renderProdDetail(); }
+
+function prodReset(){
+  prodGeselecteerd = null; prodStatus = null;
+  document.getElementById('prod-search').value = '';
+  document.getElementById('prod-resultaten').innerHTML = '';
+  document.getElementById('prod-detail').style.display = 'none';
+  document.getElementById('prod-search').focus();
+}
+
+async function renderProdDetail(){
+  const el = document.getElementById('prod-detail');
+  if(!prodGeselecteerd){ el.style.display = 'none'; return; }
+  el.style.display = 'block';
+
+  const dubbels = await checkDubbeleAanvraag(prodGeselecteerd.sku);
+
+  el.innerHTML = `
+    <div class="art-selected-box">
+      <strong>${escapeHtml(prodGeselecteerd.sku||'')}</strong> — ${escapeHtml(prodGeselecteerd.naam)}
+      <button class="btn sm" style="float:right" onclick="prodReset()"><i class="ti ti-arrow-back"></i> Ander artikel</button>
+    </div>
+    ${dubbels.length ? `<div class="dup-warning"><i class="ti ti-info-circle"></i> Er staat al een openstaande aanvraag voor dit artikel (${escapeHtml(dubbels[0].aangevraagd_door_naam||'')}, ${formatDatum(dubbels[0].aangemaakt_op)}).</div>` : ''}
+    <div style="font-size:13px;color:var(--tx2);margin-bottom:10px">Is dit artikel volledig op, of nog beperkt op voorraad?</div>
+    <div class="status-choice-row">
+      <div class="status-choice ${prodStatus==='op'?'sel-op':''}" onclick="prodKiesStatus('op')"><i class="ti ti-alert-triangle"></i> Volledig op</div>
+      <div class="status-choice ${prodStatus==='bijna_op'?'sel-bijna':''}" onclick="prodKiesStatus('bijna_op')"><i class="ti ti-package"></i> Nog beperkt op voorraad</div>
+    </div>
+    ${prodStatus==='bijna_op' ? `<div class="auth-field" style="max-width:220px"><label>Geschatte resterende voorraad (aantal)</label><input type="number" min="0" id="prod-aantal" placeholder="bv. 3" autofocus></div>` : ''}
+    ${prodStatus ? `<div class="auth-field"><label>Opmerking (optioneel)</label><input id="prod-opm" placeholder="bv. dringend voor lopend order"></div>
+      <button class="btn primary" onclick="prodVerstuur()"><i class="ti ti-send"></i> Aanvraag versturen</button>` : ''}
+  `;
+  if(prodStatus==='bijna_op') document.getElementById('prod-aantal')?.focus();
+}
+
+async function prodVerstuur(){
+  if(!prodGeselecteerd || !prodStatus){ showToast('Kies eerst een artikel en status.'); return; }
+  const aantalRaw = prodStatus==='bijna_op' ? (document.getElementById('prod-aantal')?.value || '') : '';
+  const urgentie = berekenUrgentie(prodStatus, aantalRaw);
+  const opmerking = document.getElementById('prod-opm')?.value.trim() || null;
+  try{
+    const {error} = await supabaseClient.from('magazijn_bestelaanvragen').insert({
+      artikel_sku: prodGeselecteerd.sku || null,
+      artikel_naam: prodGeselecteerd.naam,
+      artikel_groep: prodGeselecteerd.groep || null,
+      status_voorraad: prodStatus,
+      geschat_aantal: aantalRaw!=='' ? parseInt(aantalRaw,10) : null,
+      urgentie,
+      opmerking,
+      aangevraagd_door_email: currentUser.email,
+      aangevraagd_door_naam: currentUserNaam,
+    });
+    if(error) throw error;
+    showToast('✓ Aanvraag verstuurd');
+    prodReset();
+    prodLaadMijnAanvragen();
+  }catch(e){
+    if(String(e.message).includes('does not exist')) toonSetupNodig();
+    else showToast('Fout: ' + e.message);
+  }
+}
+
+async function prodLaadMijnAanvragen(){
+  const tbody = document.getElementById('prod-mijn-tbody');
+  const empty = document.getElementById('prod-mijn-empty');
+  try{
+    const {data,error} = await supabaseClient.from('magazijn_bestelaanvragen').select('*')
+      .eq('aangevraagd_door_email', currentUser.email)
+      .order('aangemaakt_op', {ascending:false}).limit(30);
+    if(error) throw error;
+    if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(r=>`
+      <tr>
+        <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
+        <td>${statusLabel(r.status_voorraad)}${r.geschat_aantal!=null ? ' ('+r.geschat_aantal+' st.)' : ''}</td>
+        <td>${urgentieBadge(r.urgentie)}</td>
+        <td>${formatDatum(r.aangemaakt_op)}</td>
+        <td>${r.besteld ? '<span class="badge" style="background:#00805e;color:#fff">Besteld</span>' : '<span class="badge" style="background:var(--bg3);color:var(--tx2)">In afwachting</span>'}</td>
+      </tr>`).join('');
+  }catch(e){
+    if(String(e.message).includes('does not exist')) toonSetupNodig();
+    tbody.innerHTML = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SERVICE — onderdelen uit stock registreren
+// ══════════════════════════════════════════════════════════════
+let servResLijst = [];
+let servGeselecteerd = null;
+
+function servRenderResultaten(){
+  const q = document.getElementById('serv-search').value;
+  servGeselecteerd = null;
+  document.getElementById('serv-detail').style.display = 'none';
+  const res = zoekArtikelen(q);
+  servResLijst = res;
+  const el = document.getElementById('serv-resultaten');
+  if(!q.trim()){ el.innerHTML = ''; return; }
+  if(!artikelen.length){ el.innerHTML = '<div class="wms-empty" style="padding:16px"><i class="ti ti-loader-2"></i><p>Artikelen worden nog geladen…</p></div>'; return; }
+  if(!res.length){ el.innerHTML = '<div class="wms-empty" style="padding:16px"><i class="ti ti-search-off"></i><p>Geen artikel gevonden.</p></div>'; return; }
+  el.innerHTML = res.map((a,i)=>`
+    <div class="art-result-item" onclick="servSelecteer(${i})">
+      <div><strong>${escapeHtml(a.sku||'—')}</strong> — ${escapeHtml(a.naam)}</div>
+      ${a.groep ? `<div style="font-size:11px;color:var(--tx3);margin-top:2px">${escapeHtml(a.groep)}</div>` : ''}
+    </div>`).join('');
+}
+
+function servSelecteer(i){
+  servGeselecteerd = servResLijst[i];
+  document.getElementById('serv-resultaten').innerHTML = '';
+  document.getElementById('serv-search').value = servGeselecteerd.naam;
+  renderServDetail();
+}
+
+function servReset(){
+  servGeselecteerd = null;
+  document.getElementById('serv-search').value = '';
+  document.getElementById('serv-resultaten').innerHTML = '';
+  document.getElementById('serv-detail').style.display = 'none';
+  document.getElementById('serv-search').focus();
+}
+
+function renderServDetail(){
+  const el = document.getElementById('serv-detail');
+  if(!servGeselecteerd){ el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="art-selected-box">
+      <strong>${escapeHtml(servGeselecteerd.sku||'')}</strong> — ${escapeHtml(servGeselecteerd.naam)}
+      <button class="btn sm" style="float:right" onclick="servReset()"><i class="ti ti-arrow-back"></i> Ander artikel</button>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div class="auth-field" style="max-width:140px"><label>Aantal meegenomen</label><input type="number" min="1" id="serv-aantal" placeholder="bv. 2" autofocus></div>
+      <div class="auth-field" style="flex:1;min-width:200px"><label>Reden</label>
+        <select id="serv-reden">
+          <option value="">Kies...</option>
+          <option value="interventie">Interventie</option>
+          <option value="aanvulling">Aanvulling voorraad (bv. wagen)</option>
+          <option value="andere">Andere</option>
+        </select>
+      </div>
+    </div>
+    <div class="auth-field"><label>Toelichting (optioneel)</label><input id="serv-detail-inp" placeholder="bv. klant Janssens, laadpaal defect"></div>
+    <button class="btn primary" onclick="servVerstuur()"><i class="ti ti-send"></i> Registreren</button>
+  `;
+}
+
+async function servVerstuur(){
+  const aantal = document.getElementById('serv-aantal')?.value;
+  const reden = document.getElementById('serv-reden')?.value;
+  const redenDetail = document.getElementById('serv-detail-inp')?.value.trim() || null;
+  if(!servGeselecteerd || !aantal || parseInt(aantal,10) <= 0){ showToast('Vul een geldig aantal in.'); return; }
+  if(!reden){ showToast('Kies een reden.'); return; }
+  try{
+    const {error} = await supabaseClient.from('magazijn_service_registraties').insert({
+      artikel_sku: servGeselecteerd.sku || null,
+      artikel_naam: servGeselecteerd.naam,
+      artikel_groep: servGeselecteerd.groep || null,
+      aantal: parseInt(aantal,10),
+      reden,
+      reden_detail: redenDetail,
+      medewerker_email: currentUser.email,
+      medewerker_naam: currentUserNaam,
+    });
+    if(error) throw error;
+    showToast('✓ Geregistreerd');
+    servReset();
+    servLaadMijnRegistraties();
+  }catch(e){
+    if(String(e.message).includes('does not exist')) toonSetupNodig();
+    else showToast('Fout: ' + e.message);
+  }
+}
+
+function redenLabel(r){ return {interventie:'Interventie', aanvulling:'Aanvulling voorraad', andere:'Andere'}[r] || r; }
+
+async function servLaadMijnRegistraties(){
+  const tbody = document.getElementById('serv-mijn-tbody');
+  const empty = document.getElementById('serv-mijn-empty');
+  try{
+    const {data,error} = await supabaseClient.from('magazijn_service_registraties').select('*')
+      .eq('medewerker_email', currentUser.email)
+      .order('aangemaakt_op', {ascending:false}).limit(30);
+    if(error) throw error;
+    if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(r=>`
+      <tr>
+        <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
+        <td>${r.aantal}</td>
+        <td>${escapeHtml(redenLabel(r.reden))}${r.reden_detail?' — '+escapeHtml(r.reden_detail):''}</td>
+        <td>${formatDatum(r.aangemaakt_op)}</td>
+      </tr>`).join('');
+  }catch(e){
+    if(String(e.message).includes('does not exist')) toonSetupNodig();
+    tbody.innerHTML = '';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// BEHEER (manager) — besteloverzicht + service-log
+// ══════════════════════════════════════════════════════════════
+let beheerFilter = 'open';
+function beheerSetFilter(f){
+  beheerFilter = f;
+  document.querySelectorAll('#beheer-filter-pills .pill').forEach(p=>p.classList.toggle('active', p.dataset.f===f));
+  beheerLaad();
+}
+
+async function beheerLaad(){
+  const tbody = document.getElementById('beheer-tbody');
+  const empty = document.getElementById('beheer-empty');
+  try{
+    let q = supabaseClient.from('magazijn_bestelaanvragen').select('*');
+    if(beheerFilter==='open') q = q.eq('besteld', false);
+    if(beheerFilter==='besteld') q = q.eq('besteld', true);
+    const {data,error} = await q.order('aangemaakt_op', {ascending:false}).limit(200);
+    if(error) throw error;
+    let rows = data || [];
+    const rang = {hoog:0, normaal:1, laag:2};
+    rows.sort((a,b)=>{
+      if(a.besteld !== b.besteld) return a.besteld ? 1 : -1;
+      const ra = rang[a.urgentie] ?? 1, rb = rang[b.urgentie] ?? 1;
+      if(ra !== rb) return ra - rb;
+      return new Date(a.aangemaakt_op) - new Date(b.aangemaakt_op);
+    });
+    if(!rows.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = rows.map(r=>`
+      <tr>
+        <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
+        <td>${statusLabel(r.status_voorraad)}${r.geschat_aantal!=null ? ' ('+r.geschat_aantal+' st.)' : ''}</td>
+        <td>${urgentieBadge(r.urgentie)}</td>
+        <td>${escapeHtml(r.aangevraagd_door_naam||r.aangevraagd_door_email)}</td>
+        <td>${formatDatum(r.aangemaakt_op)}</td>
+        <td>${escapeHtml(r.opmerking||'')}</td>
+        <td><button class="btn sm ${r.besteld?'primary':''}" onclick="beheerToggleBesteld('${r.id}', ${!r.besteld})">
+          <i class="ti ti-${r.besteld?'check':'circle'}"></i> ${r.besteld?'Besteld':'Markeer besteld'}
+        </button></td>
+      </tr>`).join('');
+  }catch(e){
+    if(String(e.message).includes('does not exist')) toonSetupNodig();
+    tbody.innerHTML = '';
+  }
+  beheerLaadServiceLog();
+}
+
+async function beheerToggleBesteld(id, nieuw){
+  try{
+    const patch = nieuw
+      ? {besteld:true, besteld_door_email:currentUser.email, besteld_op:new Date().toISOString()}
+      : {besteld:false, besteld_door_email:null, besteld_op:null};
+    const {error} = await supabaseClient.from('magazijn_bestelaanvragen').update(patch).eq('id', id);
+    if(error) throw error;
+    showToast(nieuw ? '✓ Gemarkeerd als besteld' : 'Markering ongedaan gemaakt');
+    beheerLaad();
+  }catch(e){ showToast('Fout: ' + e.message); }
+}
+
+async function beheerLaadServiceLog(){
+  const tbody = document.getElementById('beheer-serv-tbody');
+  const empty = document.getElementById('beheer-serv-empty');
+  try{
+    const {data,error} = await supabaseClient.from('magazijn_service_registraties').select('*')
+      .order('aangemaakt_op', {ascending:false}).limit(100);
+    if(error) throw error;
+    if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.map(r=>`
+      <tr>
+        <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
+        <td>${r.aantal}</td>
+        <td>${escapeHtml(redenLabel(r.reden))}${r.reden_detail?' — '+escapeHtml(r.reden_detail):''}</td>
+        <td>${escapeHtml(r.medewerker_naam||r.medewerker_email)}</td>
+        <td>${formatDatum(r.aangemaakt_op)}</td>
+      </tr>`).join('');
+  }catch(e){ tbody.innerHTML = ''; }
+}
+
+function toonSetupNodig(){
+  showToast('⚠ Database nog niet klaar — zie SQL-script in de bijlage.');
+}
+
+// ══════════════════════════════════════════════════════════════
+// GEBRUIKERS (manager) — uitnodigen + rollen toekennen
+// ══════════════════════════════════════════════════════════════
+let allUsersCache = [];
+
+function gebrOpenModal(){
+  document.getElementById('gebr-naam').value = '';
+  document.getElementById('gebr-email').value = '';
+  document.getElementById('gebr-rol-productie').checked = false;
+  document.getElementById('gebr-rol-service').checked = false;
+  document.getElementById('gebr-rol-manager').checked = false;
+  document.getElementById('gebr-modal-err').classList.remove('show');
+  document.getElementById('gebr-modal-msg').classList.remove('show');
+  document.getElementById('gebr-modal').classList.add('open');
+}
+function gebrSluitModal(){ document.getElementById('gebr-modal').classList.remove('open'); }
+
+async function gebrUitnodigen(){
+  const naam = document.getElementById('gebr-naam').value.trim();
+  const email = document.getElementById('gebr-email').value.trim();
+  const rollen = [];
+  if(document.getElementById('gebr-rol-productie').checked) rollen.push('productie');
+  if(document.getElementById('gebr-rol-service').checked) rollen.push('service');
+  if(document.getElementById('gebr-rol-manager').checked) rollen.push('manager');
+  const errEl = document.getElementById('gebr-modal-err');
+  const msgEl = document.getElementById('gebr-modal-msg');
+  errEl.classList.remove('show'); msgEl.classList.remove('show');
+  if(!email){ errEl.textContent = 'Vul een e-mailadres in.'; errEl.classList.add('show'); return; }
+  if(!rollen.length){ errEl.textContent = 'Kies minstens één rol.'; errEl.classList.add('show'); return; }
+
+  const metadata = {naam, magazijn_rollen: rollen};
+  try{
+    const {error} = await (supabaseClient.auth.admin?.inviteUserByEmail
+      ? supabaseClient.auth.admin.inviteUserByEmail(email, {data: metadata})
+      : Promise.resolve({error:{message:'Admin API niet beschikbaar'}}));
+    if(error){
+      // Bewaar als pending-uitnodiging in de gedeelde settings-tabel (zoals het dashboard doet)
+      await supabaseClient.from('settings').upsert({key:'invite_'+email, data:{email, ...metadata, invited_at:new Date().toISOString(), invited_by:currentUser.email}}, {onConflict:'key'}).catch(()=>{});
+      msgEl.textContent = `Geen service_role key ingesteld — uitnodiging bewaard voor ${email}. Rond dit af via Supabase of het dashboard.`;
+      msgEl.classList.add('show');
+    } else {
+      msgEl.textContent = `Uitnodigingsmail verstuurd naar ${email}!`;
+      msgEl.classList.add('show');
+    }
+    gebrLaadLijst();
+  }catch(e){ errEl.textContent = 'Fout: ' + e.message; errEl.classList.add('show'); }
+}
+
+async function gebrLaadLijst(){
+  const el = document.getElementById('gebr-list');
+  const hint = document.getElementById('gebr-srk-hint');
+  try{
+    const {data,error} = await supabaseClient.auth.admin.listUsers();
+    if(error || !data) throw error || new Error('geen data');
+    allUsersCache = data.users || [];
+    hint.style.display = 'none';
+    if(!allUsersCache.length){ el.innerHTML = '<div class="wms-empty"><i class="ti ti-users"></i><p>Geen gebruikers.</p></div>'; return; }
+    el.innerHTML = allUsersCache.map(u=>{
+      const rollen = berekenRollen(u);
+      const naam = u.user_metadata?.naam || u.email;
+      const initiaal = (naam||'?').trim()[0]?.toUpperCase() || '?';
+      const isAdminAcc = u.email === ADMIN_EMAIL;
+      return `
+        <div class="user-item">
+          <div class="user-avatar">${initiaal}</div>
+          <div style="flex:1;min-width:160px">
+            <div style="font-weight:600;font-size:13px">${escapeHtml(naam)}</div>
+            <div style="font-size:11.5px;color:var(--tx3)">${escapeHtml(u.email)}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${['productie','service','manager'].map(r=>`
+              <span class="role-chip ${rollen.includes(r)?'on':''}" ${isAdminAcc?'':`onclick="gebrToggleRol('${u.id}','${r}')"`} title="${isAdminAcc?'Hoofdaccount heeft altijd volledige toegang':'Klik om te wijzigen'}">${r}</span>
+            `).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  }catch(e){
+    hint.style.display = 'block';
+    hint.innerHTML = `<strong><i class="ti ti-info-circle"></i> Gebruikersbeheer vereist een service_role key.</strong><br>
+      Die staat waarschijnlijk al klaar in het bestaande dashboard (tabblad Instellingen → Supabase). Zodra die daar is ingesteld,
+      werkt deze lijst hier automatisch mee. Anders: Supabase → Settings → API Keys → service_role key.`;
+    el.innerHTML = '';
+  }
+}
+
+async function gebrToggleRol(userId, rol){
+  const u = allUsersCache.find(x=>x.id===userId);
+  if(!u) return;
+  let rollen = Array.isArray(u.user_metadata?.magazijn_rollen) ? u.user_metadata.magazijn_rollen.slice() : [];
+  if(rollen.includes(rol)) rollen = rollen.filter(r=>r!==rol);
+  else rollen.push(rol);
+  try{
+    await supabaseClient.auth.admin.updateUserById(userId, {user_metadata: {...u.user_metadata, magazijn_rollen: rollen}});
+    showToast('Rollen bijgewerkt.');
+    gebrLaadLijst();
+  }catch(e){ showToast('Fout: ' + e.message); }
+}
+</script>
+</body>
+</html>

@@ -92,7 +92,7 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
 .topbar-user .btn{background:transparent;border-color:rgba(255,255,255,.25);color:#fff}
 .topbar-user .btn:hover{background:rgba(255,255,255,.12)}
 
-.page{display:none;max-width:1000px;margin:0 auto;padding:22px 18px 60px}
+.page{display:none;max-width:1280px;margin:0 auto;padding:22px 18px 60px}
 .page.active{display:block}
 
 /* ── artikel zoeken ─────────────────────────────────────────── */
@@ -182,13 +182,13 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
     <div id="prod-resultaten" style="margin-top:10px"></div>
     <div id="prod-detail" style="display:none"></div>
   </div>
-  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Mijn aanvragen</div>
+  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Aanvragen <span style="font-weight:400;color:var(--tx3);font-size:12px">— van heel het productieteam</span></div>
   <div class="wms-card">
     <div class="wms-table-wrap"><table class="wms-table">
-      <thead><tr><th>Artikel</th><th>Status</th><th>Urgentie</th><th>Datum</th><th>Status besteld</th></tr></thead>
-      <tbody id="prod-mijn-tbody"></tbody>
+      <thead><tr><th>Artikel</th><th>Status</th><th>Urgentie</th><th>Aangevraagd door</th><th>Datum</th><th>Status besteld</th></tr></thead>
+      <tbody id="prod-aanvragen-tbody"></tbody>
     </table></div>
-    <div id="prod-mijn-empty" class="wms-empty" style="display:none"><i class="ti ti-clipboard-list"></i><p>Nog geen aanvragen ingediend.</p></div>
+    <div id="prod-aanvragen-empty" class="wms-empty" style="display:none"><i class="ti ti-clipboard-list"></i><p>Nog geen aanvragen ingediend.</p></div>
   </div>
 </div>
 
@@ -197,18 +197,36 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
   <div class="wms-page-header">
     <div><div class="wms-page-title">Onderdelen uit stock</div><div class="wms-page-sub">Registreer welke onderdelen je uit het magazijn hebt meegenomen.</div></div>
   </div>
-  <div class="wms-card" style="margin-bottom:20px">
-    <input class="wms-search" id="serv-search" placeholder="Zoek op artikelcode of omschrijving..." oninput="servRenderResultaten()" autocomplete="off">
-    <div id="serv-resultaten" style="margin-top:10px"></div>
-    <div id="serv-detail" style="display:none"></div>
-  </div>
-  <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Mijn registraties</div>
-  <div class="wms-card">
-    <div class="wms-table-wrap"><table class="wms-table">
-      <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Datum</th></tr></thead>
-      <tbody id="serv-mijn-tbody"></tbody>
-    </table></div>
-    <div id="serv-mijn-empty" class="wms-empty" style="display:none"><i class="ti ti-tool"></i><p>Nog geen registraties.</p></div>
+  <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1;min-width:320px">
+      <div class="wms-card" style="margin-bottom:20px">
+        <input class="wms-search" id="serv-search" placeholder="Zoek op artikelcode of omschrijving..." oninput="servRenderResultaten()" autocomplete="off">
+        <div id="serv-resultaten" style="margin-top:10px"></div>
+        <div id="serv-detail" style="display:none"></div>
+      </div>
+      <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Registraties <span style="font-weight:400;color:var(--tx3);font-size:12px">— van heel het serviceteam</span></div>
+      <div class="wms-card">
+        <div class="wms-table-wrap"><table class="wms-table">
+          <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Medewerker</th><th>Datum</th></tr></thead>
+          <tbody id="serv-alle-tbody"></tbody>
+        </table></div>
+        <div id="serv-alle-empty" class="wms-empty" style="display:none"><i class="ti ti-tool"></i><p>Nog geen registraties.</p></div>
+      </div>
+    </div>
+    <div style="width:280px;flex-shrink:0">
+      <div class="wms-card" style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:10px">Kort overzicht</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--tx2)">Vandaag (team)</span><strong id="serv-stat-vandaag">–</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--tx2)">Deze week (team)</span><strong id="serv-stat-week">–</strong></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--tx2)">Mijn totaal</span><strong id="serv-stat-mijn">–</strong></div>
+        </div>
+      </div>
+      <div class="wms-card">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">Mijn registraties</div>
+        <div id="serv-mijn-compact" style="font-size:12.5px"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -225,7 +243,7 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
   </div>
   <div class="wms-card" style="margin-bottom:28px">
     <div class="wms-table-wrap"><table class="wms-table">
-      <thead><tr><th>Artikel</th><th>Voorraadstatus</th><th>Urgentie</th><th>Aangevraagd door</th><th>Datum</th><th>Opmerking</th><th>Verwachte levering</th><th>Besteld</th></tr></thead>
+      <thead><tr><th>Artikel</th><th>Voorraadstatus</th><th>Urgentie</th><th>Aangevraagd door</th><th>Datum</th><th>Opmerking</th><th>Verwachte levering</th><th>Besteld</th><th>Acties</th></tr></thead>
       <tbody id="beheer-tbody"></tbody>
     </table></div>
     <div id="beheer-empty" class="wms-empty" style="display:none"><i class="ti ti-clipboard-check"></i><p>Geen aanvragen.</p></div>
@@ -234,10 +252,60 @@ input,select,textarea{font-family:'Inter',sans-serif;font-size:14px}
   <div class="wms-page-title" style="font-size:15px;margin-bottom:10px">Service-registraties (uit magazijn genomen)</div>
   <div class="wms-card">
     <div class="wms-table-wrap"><table class="wms-table">
-      <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Medewerker</th><th>Datum</th></tr></thead>
+      <thead><tr><th>Artikel</th><th>Aantal</th><th>Reden</th><th>Medewerker</th><th>Datum</th><th>Acties</th></tr></thead>
       <tbody id="beheer-serv-tbody"></tbody>
     </table></div>
     <div id="beheer-serv-empty" class="wms-empty" style="display:none"><i class="ti ti-tool"></i><p>Geen registraties.</p></div>
+  </div>
+</div>
+
+<!-- Bewerk-aanvraag-modal -->
+<div class="modal-overlay" id="edit-aanvraag-modal">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Aanvraag bewerken</span><button class="modal-close" onclick="editAanvraagSluiten()"><i class="ti ti-x"></i></button></div>
+    <div class="auth-field"><label>Artikelcode</label><input id="edit-aanvraag-sku"></div>
+    <div class="auth-field"><label>Artikelnaam</label><input id="edit-aanvraag-naam"></div>
+    <div class="auth-field"><label>Voorraadstatus</label>
+      <select id="edit-aanvraag-status">
+        <option value="op">Volledig op</option>
+        <option value="bijna_op">Nog beperkt op voorraad</option>
+      </select>
+    </div>
+    <div class="auth-field"><label>Geschat aantal</label><input type="number" min="0" id="edit-aanvraag-aantal"></div>
+    <div class="auth-field"><label>Urgentie</label>
+      <select id="edit-aanvraag-urgentie">
+        <option value="hoog">Hoog</option>
+        <option value="normaal">Normaal</option>
+        <option value="laag">Laag</option>
+      </select>
+    </div>
+    <div class="auth-field"><label>Opmerking</label><input id="edit-aanvraag-opmerking"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="editAanvraagSluiten()">Annuleren</button>
+      <button class="btn primary" onclick="editAanvraagOpslaan()"><i class="ti ti-check"></i> Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bewerk-registratie-modal -->
+<div class="modal-overlay" id="edit-registratie-modal">
+  <div class="modal-box">
+    <div class="modal-header"><span class="modal-title">Registratie bewerken</span><button class="modal-close" onclick="editRegistratieSluiten()"><i class="ti ti-x"></i></button></div>
+    <div class="auth-field"><label>Artikelcode</label><input id="edit-reg-sku"></div>
+    <div class="auth-field"><label>Artikelnaam</label><input id="edit-reg-naam"></div>
+    <div class="auth-field"><label>Aantal</label><input type="number" min="1" id="edit-reg-aantal"></div>
+    <div class="auth-field"><label>Reden</label>
+      <select id="edit-reg-reden">
+        <option value="interventie">Interventie</option>
+        <option value="aanvulling">Aanvulling voorraad</option>
+        <option value="andere">Andere</option>
+      </select>
+    </div>
+    <div class="auth-field"><label>Toelichting</label><input id="edit-reg-detail"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="editRegistratieSluiten()">Annuleren</button>
+      <button class="btn primary" onclick="editRegistratieOpslaan()"><i class="ti ti-check"></i> Opslaan</button>
+    </div>
   </div>
 </div>
 
@@ -460,8 +528,8 @@ function showTab(naam){
     document.getElementById('tab-'+id).classList.toggle('active', id===naam);
   });
   if(beheerPoll){ clearInterval(beheerPoll); beheerPoll = null; }
-  if(naam==='productie') prodLaadMijnAanvragen();
-  if(naam==='service') servLaadMijnRegistraties();
+  if(naam==='productie') prodLaadAanvragen();
+  if(naam==='service') servRefreshAlles();
   if(naam==='beheer'){
     beheerLaad();
     beheerPoll = setInterval(beheerLaad, 20000); // lichte polling zodat nieuwe aanvragen vanzelf verschijnen
@@ -655,22 +723,23 @@ async function prodVerstuur(){
     if(error) throw error;
     showToast('✓ Aanvraag verstuurd');
     prodReset();
-    prodLaadMijnAanvragen();
+    prodLaadAanvragen();
   }catch(e){
     if(String(e.message).includes('does not exist')) toonSetupNodig();
     else showToast('Fout: ' + e.message);
   }
 }
 
-async function prodLaadMijnAanvragen(){
-  const tbody = document.getElementById('prod-mijn-tbody');
-  const empty = document.getElementById('prod-mijn-empty');
+// Toont de aanvragen van het HELE productieteam (niet enkel de eigen aanvragen),
+// zodat iedereen met de rol 'productie' ziet wat collega's al hebben aangevraagd.
+async function prodLaadAanvragen(){
+  const tbody = document.getElementById('prod-aanvragen-tbody');
+  const empty = document.getElementById('prod-aanvragen-empty');
   await beheerAutoMarkGeleverd();
   try{
     const {data,error} = await supabaseClient.from('magazijn_bestelaanvragen').select('*')
-      .eq('aangevraagd_door_email', currentUser.email)
       .eq('geleverd', false)
-      .order('aangemaakt_op', {ascending:false}).limit(30);
+      .order('aangemaakt_op', {ascending:false}).limit(100);
     if(error) throw error;
     if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
@@ -679,6 +748,7 @@ async function prodLaadMijnAanvragen(){
         <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
         <td>${statusLabel(r.status_voorraad)}${r.geschat_aantal!=null ? ' ('+r.geschat_aantal+' st.)' : ''}</td>
         <td>${urgentieBadge(r.urgentie)}</td>
+        <td>${escapeHtml(r.aangevraagd_door_naam||r.aangevraagd_door_email)}</td>
         <td>${formatDatum(r.aangemaakt_op)}</td>
         <td>${r.besteld
             ? `<span class="badge" style="background:#00805e;color:#fff">Besteld</span>${r.verwachte_levering_op ? `<div style="font-size:11px;color:var(--tx3);margin-top:3px">Verwacht: ${formatDatum(r.verwachte_levering_op)}</div>` : ''}`
@@ -773,7 +843,7 @@ async function servVerstuur(){
     if(error) throw error;
     showToast('✓ Geregistreerd');
     servReset();
-    servLaadMijnRegistraties();
+    servRefreshAlles();
   }catch(e){
     if(String(e.message).includes('does not exist')) toonSetupNodig();
     else showToast('Fout: ' + e.message);
@@ -782,13 +852,17 @@ async function servVerstuur(){
 
 function redenLabel(r){ return {interventie:'Interventie', aanvulling:'Aanvulling voorraad', andere:'Andere'}[r] || r; }
 
-async function servLaadMijnRegistraties(){
-  const tbody = document.getElementById('serv-mijn-tbody');
-  const empty = document.getElementById('serv-mijn-empty');
+async function servRefreshAlles(){
+  await Promise.all([servLaadAlleRegistraties(), servLaadMijnCompact(), servLaadKortOverzicht()]);
+}
+
+// Hoofdtabel: registraties van het HELE serviceteam (niet enkel de eigen).
+async function servLaadAlleRegistraties(){
+  const tbody = document.getElementById('serv-alle-tbody');
+  const empty = document.getElementById('serv-alle-empty');
   try{
     const {data,error} = await supabaseClient.from('magazijn_service_registraties').select('*')
-      .eq('medewerker_email', currentUser.email)
-      .order('aangemaakt_op', {ascending:false}).limit(30);
+      .order('aangemaakt_op', {ascending:false}).limit(100);
     if(error) throw error;
     if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
@@ -797,12 +871,49 @@ async function servLaadMijnRegistraties(){
         <td><strong>${escapeHtml(r.artikel_sku||'')}</strong> ${escapeHtml(r.artikel_naam)}</td>
         <td>${r.aantal}</td>
         <td>${escapeHtml(redenLabel(r.reden))}${r.reden_detail?' — '+escapeHtml(r.reden_detail):''}</td>
+        <td>${escapeHtml(r.medewerker_naam||r.medewerker_email)}</td>
         <td>${formatDatum(r.aangemaakt_op)}</td>
       </tr>`).join('');
   }catch(e){
     if(String(e.message).includes('does not exist')) toonSetupNodig();
     tbody.innerHTML = '';
   }
+}
+
+// Compacte lijst rechts: enkel mijn eigen laatste registraties, als snel persoonlijk overzicht.
+async function servLaadMijnCompact(){
+  const el = document.getElementById('serv-mijn-compact');
+  if(!el) return;
+  try{
+    const {data,error} = await supabaseClient.from('magazijn_service_registraties').select('*')
+      .eq('medewerker_email', currentUser.email)
+      .order('aangemaakt_op', {ascending:false}).limit(5);
+    if(error) throw error;
+    if(!data || !data.length){ el.innerHTML = '<div style="color:var(--tx3)">Nog geen registraties.</div>'; return; }
+    el.innerHTML = data.map(r=>`
+      <div style="padding:7px 0;border-bottom:1px solid var(--bd)">
+        <div style="font-weight:600">${escapeHtml(r.artikel_sku||'')} ${escapeHtml(r.artikel_naam)}</div>
+        <div style="font-size:11px;color:var(--tx3)">${r.aantal} st. · ${escapeHtml(redenLabel(r.reden))} · ${formatDatum(r.aangemaakt_op)}</div>
+      </div>`).join('');
+  }catch(e){ el.innerHTML = ''; }
+}
+
+// Korte teamstatistiek rechtsboven.
+async function servLaadKortOverzicht(){
+  try{
+    const nu = new Date();
+    const startVandaag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate()).toISOString();
+    const startWeek = new Date(nu.getTime() - 7*24*3600*1000).toISOString();
+    const [vandaag, week, mijnTotaal] = await Promise.all([
+      supabaseClient.from('magazijn_service_registraties').select('id', {count:'exact', head:true}).gte('aangemaakt_op', startVandaag),
+      supabaseClient.from('magazijn_service_registraties').select('id', {count:'exact', head:true}).gte('aangemaakt_op', startWeek),
+      supabaseClient.from('magazijn_service_registraties').select('id', {count:'exact', head:true}).eq('medewerker_email', currentUser.email),
+    ]);
+    const vEl = document.getElementById('serv-stat-vandaag'), wEl = document.getElementById('serv-stat-week'), mEl = document.getElementById('serv-stat-mijn');
+    if(vEl) vEl.textContent = vandaag.count ?? '–';
+    if(wEl) wEl.textContent = week.count ?? '–';
+    if(mEl) mEl.textContent = mijnTotaal.count ?? '–';
+  }catch(e){ console.warn('kort overzicht fout:', e.message); }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -832,6 +943,8 @@ async function beheerAutoMarkGeleverd(){
   }catch(e){ console.warn('auto-geleverd fout:', e.message); }
 }
 
+let beheerRows = []; // laatst geladen aanvragen, voor bewerken/verwijderen zonder extra fetch
+
 async function beheerLaad(){
   const tbody = document.getElementById('beheer-tbody');
   const empty = document.getElementById('beheer-empty');
@@ -852,6 +965,7 @@ async function beheerLaad(){
       if(ra !== rb) return ra - rb;
       return new Date(a.aangemaakt_op) - new Date(b.aangemaakt_op);
     });
+    beheerRows = rows;
     if(!rows.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     tbody.innerHTML = rows.map(r=>`
@@ -866,12 +980,63 @@ async function beheerLaad(){
         <td><button class="btn sm ${r.besteld?'primary':''}" onclick="${r.besteld ? `beheerToggleBesteld('${r.id}', false)` : `beheerOpenLeverModal('${r.id}')`}">
           <i class="ti ti-${r.besteld?'check':'circle'}"></i> ${r.besteld?'Besteld':'Markeer besteld'}
         </button></td>
+        <td style="white-space:nowrap">
+          <button class="btn sm" title="Bewerken" onclick="editAanvraagOpenen('${r.id}')"><i class="ti ti-pencil"></i></button>
+          <button class="btn sm danger" title="Verwijderen" onclick="beheerVerwijderAanvraag('${r.id}')"><i class="ti ti-trash"></i></button>
+        </td>
       </tr>`).join('');
   }catch(e){
     if(String(e.message).includes('does not exist')) toonSetupNodig();
     tbody.innerHTML = '';
   }
   beheerLaadServiceLog();
+}
+
+async function beheerVerwijderAanvraag(id){
+  const r = beheerRows.find(x=>x.id===id);
+  if(!confirm(`Aanvraag "${r?.artikel_naam||''}" definitief verwijderen?`)) return;
+  try{
+    const {error} = await supabaseClient.from('magazijn_bestelaanvragen').delete().eq('id', id);
+    if(error) throw error;
+    showToast('✓ Aanvraag verwijderd');
+    beheerLaad();
+  }catch(e){ showToast('Fout: ' + e.message); }
+}
+
+function editAanvraagOpenen(id){
+  const r = beheerRows.find(x=>x.id===id);
+  if(!r) return;
+  editAanvraagId = id;
+  document.getElementById('edit-aanvraag-sku').value = r.artikel_sku || '';
+  document.getElementById('edit-aanvraag-naam').value = r.artikel_naam || '';
+  document.getElementById('edit-aanvraag-status').value = r.status_voorraad || 'bijna_op';
+  document.getElementById('edit-aanvraag-aantal').value = r.geschat_aantal ?? '';
+  document.getElementById('edit-aanvraag-urgentie').value = r.urgentie || 'normaal';
+  document.getElementById('edit-aanvraag-opmerking').value = r.opmerking || '';
+  document.getElementById('edit-aanvraag-modal').classList.add('open');
+}
+function editAanvraagSluiten(){
+  document.getElementById('edit-aanvraag-modal').classList.remove('open');
+  editAanvraagId = null;
+}
+let editAanvraagId = null;
+async function editAanvraagOpslaan(){
+  if(!editAanvraagId) return;
+  const aantalRaw = document.getElementById('edit-aanvraag-aantal').value;
+  try{
+    const {error} = await supabaseClient.from('magazijn_bestelaanvragen').update({
+      artikel_sku: document.getElementById('edit-aanvraag-sku').value.trim() || null,
+      artikel_naam: document.getElementById('edit-aanvraag-naam').value.trim(),
+      status_voorraad: document.getElementById('edit-aanvraag-status').value,
+      geschat_aantal: aantalRaw !== '' ? parseInt(aantalRaw,10) : null,
+      urgentie: document.getElementById('edit-aanvraag-urgentie').value,
+      opmerking: document.getElementById('edit-aanvraag-opmerking').value.trim() || null,
+    }).eq('id', editAanvraagId);
+    if(error) throw error;
+    showToast('✓ Aanvraag bijgewerkt');
+    editAanvraagSluiten();
+    beheerLaad();
+  }catch(e){ showToast('Fout: ' + e.message); }
 }
 
 // "Besteld" ongedaan maken — verwijdert ook de ingestelde levertermijn.
@@ -918,6 +1083,8 @@ async function leverKiesWeken(weken){
   }catch(e){ showToast('Fout: ' + e.message); }
 }
 
+let beheerServRows = []; // laatst geladen registraties, voor bewerken/verwijderen zonder extra fetch
+
 async function beheerLaadServiceLog(){
   const tbody = document.getElementById('beheer-serv-tbody');
   const empty = document.getElementById('beheer-serv-empty');
@@ -925,6 +1092,7 @@ async function beheerLaadServiceLog(){
     const {data,error} = await supabaseClient.from('magazijn_service_registraties').select('*')
       .order('aangemaakt_op', {ascending:false}).limit(100);
     if(error) throw error;
+    beheerServRows = data || [];
     if(!data || !data.length){ tbody.innerHTML = ''; empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     tbody.innerHTML = data.map(r=>`
@@ -934,8 +1102,57 @@ async function beheerLaadServiceLog(){
         <td>${escapeHtml(redenLabel(r.reden))}${r.reden_detail?' — '+escapeHtml(r.reden_detail):''}</td>
         <td>${escapeHtml(r.medewerker_naam||r.medewerker_email)}</td>
         <td>${formatDatum(r.aangemaakt_op)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn sm" title="Bewerken" onclick="editRegistratieOpenen('${r.id}')"><i class="ti ti-pencil"></i></button>
+          <button class="btn sm danger" title="Verwijderen" onclick="beheerVerwijderRegistratie('${r.id}')"><i class="ti ti-trash"></i></button>
+        </td>
       </tr>`).join('');
   }catch(e){ tbody.innerHTML = ''; }
+}
+
+async function beheerVerwijderRegistratie(id){
+  const r = beheerServRows.find(x=>x.id===id);
+  if(!confirm(`Registratie "${r?.artikel_naam||''}" definitief verwijderen?`)) return;
+  try{
+    const {error} = await supabaseClient.from('magazijn_service_registraties').delete().eq('id', id);
+    if(error) throw error;
+    showToast('✓ Registratie verwijderd');
+    beheerLaadServiceLog();
+  }catch(e){ showToast('Fout: ' + e.message); }
+}
+
+let editRegistratieId = null;
+function editRegistratieOpenen(id){
+  const r = beheerServRows.find(x=>x.id===id);
+  if(!r) return;
+  editRegistratieId = id;
+  document.getElementById('edit-reg-sku').value = r.artikel_sku || '';
+  document.getElementById('edit-reg-naam').value = r.artikel_naam || '';
+  document.getElementById('edit-reg-aantal').value = r.aantal ?? '';
+  document.getElementById('edit-reg-reden').value = r.reden || 'interventie';
+  document.getElementById('edit-reg-detail').value = r.reden_detail || '';
+  document.getElementById('edit-registratie-modal').classList.add('open');
+}
+function editRegistratieSluiten(){
+  document.getElementById('edit-registratie-modal').classList.remove('open');
+  editRegistratieId = null;
+}
+async function editRegistratieOpslaan(){
+  if(!editRegistratieId) return;
+  const aantalRaw = document.getElementById('edit-reg-aantal').value;
+  try{
+    const {error} = await supabaseClient.from('magazijn_service_registraties').update({
+      artikel_sku: document.getElementById('edit-reg-sku').value.trim() || null,
+      artikel_naam: document.getElementById('edit-reg-naam').value.trim(),
+      aantal: aantalRaw !== '' ? parseInt(aantalRaw,10) : null,
+      reden: document.getElementById('edit-reg-reden').value,
+      reden_detail: document.getElementById('edit-reg-detail').value.trim() || null,
+    }).eq('id', editRegistratieId);
+    if(error) throw error;
+    showToast('✓ Registratie bijgewerkt');
+    editRegistratieSluiten();
+    beheerLaadServiceLog();
+  }catch(e){ showToast('Fout: ' + e.message); }
 }
 
 function toonSetupNodig(){
